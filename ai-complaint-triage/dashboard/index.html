@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Complaint Assessment Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="data.js"></script>
+<style>
+  :root { --ink:#1c2430; --muted:#6b7684; --line:#e3e7ec; --crit:#c0392b; --high:#e08a1e; --med:#3d7ebb; --low:#8a93a0; }
+  * { box-sizing: border-box; }
+  body { margin:0; padding:28px 32px 60px; font:14px/1.5 "Segoe UI",system-ui,sans-serif; color:var(--ink); background:#f6f8fa; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  .sub { color:var(--muted); margin:0 0 24px; }
+  .kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:14px; margin-bottom:26px; }
+  .kpi { background:#fff; border:1px solid var(--line); border-radius:8px; padding:14px 16px; }
+  .kpi .v { font-size:26px; font-weight:600; }
+  .kpi .l { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.4px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(340px,1fr)); gap:18px; margin-bottom:26px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:8px; padding:16px; }
+  .card h2 { font-size:14px; margin:0 0 12px; text-transform:uppercase; letter-spacing:.4px; color:var(--muted); }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; color:var(--muted); font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:.4px; padding:6px 8px; border-bottom:1px solid var(--line); }
+  td { padding:8px; border-bottom:1px solid #f0f2f5; vertical-align:top; }
+  .pill { display:inline-block; padding:1px 8px; border-radius:10px; color:#fff; font-size:11px; font-weight:600; }
+  .Critical{background:var(--crit)} .High{background:var(--high)} .Medium{background:var(--med)} .Low{background:var(--low)}
+  .miss { color:var(--muted); font-size:12px; }
+  #compare td { font-variant-numeric:tabular-nums; }
+  #compare td.metric { font-weight:600; }
+  #compare td.num { text-align:right; width:150px; }
+  #compare th.num { text-align:right; }
+  #compare .win { color:#1e7a4b; font-weight:700; }
+  #compare .lose { color:var(--muted); }
+  #compare tr.headline td { background:#fdf1f0; border-top:1px solid #f0d4d1; border-bottom:1px solid #f0d4d1; }
+  #compare tr.headline td.metric, #compare tr.headline .win { color:var(--crit); }
+  .note { color:var(--muted); font-size:12px; margin:12px 2px 0; }
+</style>
+</head>
+<body>
+<h1>Customer Complaint Assessment &mdash; Operations Dashboard</h1>
+<p class="sub">Synthetic data. 40 complaints, June 2026. Every record below was drafted by Claude and is pending or past human review.</p>
+
+<div class="kpis" id="kpis"></div>
+
+<div class="grid">
+  <div class="card"><h2>Complaints by category</h2><canvas id="cat" height="220"></canvas></div>
+  <div class="card"><h2>Severity mix</h2><canvas id="sev" height="220"></canvas></div>
+  <div class="card"><h2>Weekly volume by severity</h2><canvas id="trend" height="220"></canvas></div>
+  <div class="card"><h2>Routing load by team</h2><canvas id="team" height="220"></canvas></div>
+</div>
+
+<div class="card">
+  <h2>Engine comparison &mdash; same 40 complaints, same answer key</h2>
+  <table id="compare"></table>
+  <p class="note" id="comparenote"></p>
+</div>
+
+<div class="card">
+  <h2>Human review queue &mdash; highest priority first</h2>
+  <table id="queue"></table>
+</div>
+
+<script>
+const D = ASSESSMENT_DATA;
+const count = (key) => D.reduce((m,r)=>(m[r[key]]=(m[r[key]]||0)+1,m),{});
+const SEV = ["Critical","High","Medium","Low"];
+const COL = {Critical:"#c0392b",High:"#e08a1e",Medium:"#3d7ebb",Low:"#8a93a0"};
+
+const review = D.filter(r => r.needs_human_review === "TRUE");
+const mdr    = D.filter(r => r.mdr_reportable_flag === "Yes");
+const serious= D.filter(r => r.severity === "Critical" || r.severity === "High");
+const gaps   = D.filter(r => r.missing_info && r.missing_info !== "none").length;
+
+document.getElementById("kpis").innerHTML = [
+  ["Complaints assessed", D.length],
+  ["Critical + High", serious.length],
+  ["Flagged MDR-reportable", mdr.length],
+  ["Sent to human review", review.length + " (" + Math.floor(100*review.length/D.length) + "%)"],
+  ["Records with info gaps", gaps],
+  ["Avg AI confidence", (D.reduce((s,r)=>s+ +r.confidence,0)/D.length).toFixed(2)],
+].map(([l,v])=>`<div class="kpi"><div class="v">${v}</div><div class="l">${l}</div></div>`).join("");
+
+if (typeof COMPARISON !== "undefined" && COMPARISON.arms.length === 2) {
+  const byName = Object.fromEntries(COMPARISON.arms.map(a => [a.name, a]));
+  const rules = byName["Keyword rules"], ai = byName["Claude + human review"];
+  const rows = [
+    {l:"Minutes per complaint",          k:"minutes_per_complaint", manual:COMPARISON.manual_minutes_per_complaint, better:"low"},
+    {l:"Category accuracy",              k:"category_accuracy",     manual:null, better:"high"},
+    {l:"Product ID accuracy",            k:"product_accuracy",      manual:null, better:"high"},
+    {l:"Severity accuracy",              k:"severity_accuracy",     manual:null, better:"high"},
+    {l:"Routing accuracy",               k:"routing_accuracy",      manual:null, better:"high"},
+    {l:"Serious severity under-calls",   k:"serious_undercalls",    manual:null, better:"low", headline:true},
+    {l:"Records still needing a human",  k:"human_review_rate",     manual:COMPARISON.manual_review_rate, better:"low"},
+  ];
+  const head = "<tr><th>Metric</th><th class='num'>Fully manual</th>" +
+               "<th class='num'>Keyword rules</th><th class='num'>Claude + human review</th></tr>";
+  document.getElementById("compare").innerHTML = head + rows.map(r => {
+    const rv = rules[r.k], av = ai[r.k];                 // numeric, for ranking only
+    const tie = rv === av;
+    const aiWins = r.better === "low" ? av < rv : av > rv;
+    const cls = w => tie ? "" : (w ? "win" : "lose");
+    return `<tr class="${r.headline ? "headline" : ""}">` +
+           `<td class="metric">${r.l}</td>` +
+           `<td class="num lose">${r.manual === null ? "&mdash;" : r.manual}</td>` +
+           `<td class="num ${cls(!aiWins)}">${rules.display[r.k]}</td>` +
+           `<td class="num ${cls(aiWins)}">${ai.display[r.k]}</td></tr>`;
+  }).join("");
+  document.getElementById("comparenote").innerHTML =
+    "Both engines were run over the identical " + COMPARISON.records +
+    " complaints and scored against the same human-reviewed answer key. Every figure above is " +
+    "calculated <em>and formatted</em> by <code>scripts/assessment.py dashboard</code> using the same code " +
+    "that prints the <code>evaluate</code> table, so the two cannot disagree. The highlighted row is the " +
+    "one that matters most: an under-call is a harmful complaint filed as routine.";
+}
+
+const bar = (id,obj,color,horizontal) => new Chart(document.getElementById(id), {
+  type:"bar",
+  data:{labels:Object.keys(obj),datasets:[{data:Object.values(obj),backgroundColor:color,borderRadius:3}]},
+  options:{indexAxis:horizontal?"y":"x",plugins:{legend:{display:false}},
+           scales:{x:{grid:{display:false}},y:{grid:{color:"#f0f2f5"},ticks:{precision:0}}}}
+});
+
+const catCounts = Object.fromEntries(Object.entries(count("category")).sort((a,b)=>b[1]-a[1]));
+bar("cat", catCounts, "#3d7ebb", true);
+bar("team", Object.fromEntries(Object.entries(count("route_team")).sort((a,b)=>b[1]-a[1])), "#5a8f6b", true);
+
+new Chart(document.getElementById("sev"), {
+  type:"doughnut",
+  data:{labels:SEV,datasets:[{data:SEV.map(s=>D.filter(r=>r.severity===s).length),
+        backgroundColor:SEV.map(s=>COL[s])}]},
+  options:{plugins:{legend:{position:"right"}}}
+});
+
+const week = d => { const t=new Date(d); t.setDate(t.getDate()-((t.getDay()+6)%7)); return t.toISOString().slice(0,10); };
+const weeks = [...new Set(D.map(r=>week(r.received_at)))].sort();
+new Chart(document.getElementById("trend"), {
+  type:"bar",
+  data:{labels:weeks,datasets:SEV.map(s=>({label:s,backgroundColor:COL[s],
+        data:weeks.map(w=>D.filter(r=>week(r.received_at)===w&&r.severity===s).length)}))},
+  options:{plugins:{legend:{position:"bottom"}},
+           scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,ticks:{precision:0}}}}
+});
+
+const q = review.slice().sort((a,b)=>b.priority_score-a.priority_score).slice(0,15);
+document.getElementById("queue").innerHTML =
+ "<tr><th>ID</th><th>Sev</th><th>Pri</th><th>Product</th><th>AI summary</th><th>Missing information</th><th>Suggested next action</th><th>Team</th><th>Conf</th></tr>" +
+ q.map(r=>`<tr>
+   <td>${r.complaint_id}</td>
+   <td><span class="pill ${r.severity}">${r.severity}</span></td>
+   <td>${r.priority_score}</td>
+   <td>${r.product_name}</td>
+   <td>${r.summary}</td>
+   <td class="miss">${(r.missing_info||"none").split(";").join("<br>")}</td>
+   <td>${r.suggested_next_action}</td>
+   <td>${r.route_team}</td>
+   <td>${r.confidence}</td></tr>`).join("");
+</script>
+</body>
+</html>

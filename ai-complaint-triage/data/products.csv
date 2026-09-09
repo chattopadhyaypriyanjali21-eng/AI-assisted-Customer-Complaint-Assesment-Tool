@@ -1,0 +1,12 @@
+product_id,product_name,product_family,regulatory_class,default_owner_team
+DEV-1001,InfuLine 300 Infusion Pump,Infusion,Class II,Product Quality Engineering
+DEV-1002,GlucoTrack G5 Blood Glucose Meter,Diabetes Care,Class II,Product Quality Engineering
+DEV-1003,PenMate Insulin Pen,Diabetes Care,Class II,Product Quality Engineering
+DEV-1004,AeroRest CPAP Unit,Respiratory,Class II,Field Service
+DEV-1005,SureSeal Surgical Stapler,Surgical,Class II,Product Quality Engineering
+DEV-1006,CardioCuff BP Monitor,Monitoring,Class II,Customer Service
+DEV-1007,NebuMist Nebulizer,Respiratory,Class II,Field Service
+DEV-1008,OxySense Pulse Oximeter,Monitoring,Class II,Software Support
+RX-2001,Cardiozan 40mg Tablets,Cardiovascular Rx,Rx Drug,Pharmacovigilance
+RX-2002,Dermaclear Topical Cream,Dermatology Rx,Rx Drug,Pharmacovigilance
+UNKNOWN,Unidentified / Not stated,Unknown,Unknown,Customer Service

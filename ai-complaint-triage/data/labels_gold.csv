@@ -1,0 +1,41 @@
+complaint_id,gold_category,gold_product_id,gold_severity,gold_team,gold_mdr_reportable
+C-1001,Device Malfunction,DEV-1001,High,Product Quality Engineering,Yes
+C-1002,Adverse Event,DEV-1002,Critical,Pharmacovigilance,Yes
+C-1003,Quality/Sterility,DEV-1005,High,Product Quality Engineering,No
+C-1004,Shipping/Logistics,UNKNOWN,Low,Supply Chain,No
+C-1005,Device Malfunction,DEV-1004,Medium,Field Service,No
+C-1006,Software/Connectivity,DEV-1008,Low,Software Support,No
+C-1007,Adverse Event,RX-2001,Critical,Pharmacovigilance,Yes
+C-1008,Packaging/Labeling,DEV-1007,High,Regulatory Affairs,No
+C-1009,Billing/Order,UNKNOWN,Low,Customer Service,No
+C-1010,Device Malfunction,DEV-1003,High,Product Quality Engineering,Yes
+C-1011,Device Malfunction,DEV-1001,High,Product Quality Engineering,Yes
+C-1012,Device Malfunction,DEV-1006,Medium,Customer Service,No
+C-1013,Device Malfunction,DEV-1005,High,Product Quality Engineering,Yes
+C-1014,Adverse Event,RX-2002,Medium,Pharmacovigilance,No
+C-1015,Usability/Training,DEV-1004,Low,Customer Service,No
+C-1016,Software/Connectivity,DEV-1008,Medium,Software Support,No
+C-1017,Shipping/Logistics,UNKNOWN,Medium,Supply Chain,No
+C-1018,Quality/Sterility,DEV-1003,High,Product Quality Engineering,No
+C-1019,Device Malfunction,DEV-1007,Medium,Field Service,No
+C-1020,Privacy Incident,UNKNOWN,High,Privacy Office,No
+C-1021,Device Malfunction,DEV-1002,High,Product Quality Engineering,Possible
+C-1022,Device Malfunction,DEV-1006,Low,Customer Service,No
+C-1023,Billing/Order,UNKNOWN,Low,Customer Service,No
+C-1024,Packaging/Labeling,RX-2001,High,Regulatory Affairs,Possible
+C-1025,Device Malfunction,DEV-1001,Critical,Product Quality Engineering,Yes
+C-1026,Software/Connectivity,DEV-1008,Low,Software Support,No
+C-1027,Usability/Training,DEV-1003,Medium,Customer Service,No
+C-1028,Shipping/Logistics,UNKNOWN,Low,Supply Chain,No
+C-1029,Adverse Event,RX-2001,High,Pharmacovigilance,Yes
+C-1030,Quality/Sterility,DEV-1005,Critical,Product Quality Engineering,Yes
+C-1031,Device Malfunction,DEV-1004,High,Field Service,Yes
+C-1032,Product Inquiry/Feedback,UNKNOWN,Low,Customer Service,No
+C-1033,Device Malfunction,DEV-1002,High,Product Quality Engineering,No
+C-1034,Billing/Order,UNKNOWN,Low,Customer Service,No
+C-1035,Software/Connectivity,DEV-1006,Medium,Software Support,No
+C-1036,Packaging/Labeling,RX-2002,Medium,Regulatory Affairs,No
+C-1037,Adverse Event,DEV-1003,Critical,Pharmacovigilance,Yes
+C-1038,Shipping/Logistics,UNKNOWN,High,Supply Chain,No
+C-1039,Adverse Event,RX-2002,High,Pharmacovigilance,Yes
+C-1040,Device Malfunction,DEV-1001,Critical,Product Quality Engineering,Yes
